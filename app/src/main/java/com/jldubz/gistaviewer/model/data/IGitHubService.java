@@ -1,11 +1,17 @@
 package com.jldubz.gistaviewer.model.data;
 
+import com.jldubz.gistaviewer.model.GitHubUser;
 import com.jldubz.gistaviewer.model.gists.Gist;
+import com.jldubz.gistaviewer.model.gists.GistComment;
 
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
+import retrofit2.http.HEAD;
+import retrofit2.http.Header;
+import retrofit2.http.Headers;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface IGitHubService {
@@ -18,5 +24,18 @@ public interface IGitHubService {
 
     @GET("/gists/starred")
     Call<List<Gist>> getStarredGists(@Query("page") int pageNum);
+
+    @GET("/gists/(gistId)") //api.github.com/gists/gistsID
+    Call<Gist> getGistsById(@Path("gistId") String gistId);
+
+    @GET("/gists/(gistId)/comments") //api.github.com/gists/gistsID
+    Call<List<GistComment>> getGistsCommentsById(@Path("gistId") String gistId, @Query("page") int pageNum);
+
+    @HEAD("/gists/(gistId)/comments") //api.github.com/gists/gistsID
+    Call<Void> getGistsCommentsHeadersById(@Path("gistId") String gistId);
+
+    // /user
+    @GET("/user")
+    Call<GitHubUser> getLoggedInUser();
 
 }

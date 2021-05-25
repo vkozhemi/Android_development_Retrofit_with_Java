@@ -4,17 +4,20 @@ import android.view.View;
 
 import com.jldubz.gistaviewer.model.Constants;
 import com.jldubz.gistaviewer.model.NetworkUtil;
+import com.jldubz.gistaviewer.model.data.BasicAuthInterceptor;
 import com.jldubz.gistaviewer.model.data.IGitHubService;
 import com.jldubz.gistaviewer.model.gists.Gist;
 import com.jldubz.gistaviewer.model.GitHubUser;
 
 import java.util.ArrayList;
+import android.util.Base64;
 import java.util.List;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -131,6 +134,42 @@ public class MainViewModel extends ViewModel {
             return;
         }
 
+        byte[] authBytes = (username + ":" + token).getBytes();
+        String auth = Base64.encodeToString(authBytes, Base64.NO_WRAP);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new BasicAuthInterceptor(username.trim(), token.trim()))
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(Constants.URL_GITHUB)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(client)
+                .build();
+
+        mGitHubService = retrofit.create(IGitHubService.class);
+
+        mGitHubService.getLoggedInUser().enqueue(new Callback<GitHubUser>() {
+            @Override
+            public void onResponse(Call<GitHubUser> call, Response<GitHubUser> response) {
+                if (!response.isSuccessful()) {
+                    initAnonService();
+                    showError(NetworkUtil.onGitHubResponseError(response));
+                    return;
+                }
+
+                mUser.postValue(response.body());
+                showProfile();
+                saveCredentials(username, token);
+
+                loadMoreYourGists();
+                loadMoreStarredGists();
+            }
+
+            @Override
+            public void onFailure(Call<GitHubUser> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
+        });
 
     }
 
