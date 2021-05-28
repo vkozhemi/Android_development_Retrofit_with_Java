@@ -19,6 +19,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -218,6 +219,24 @@ public class GistViewModel extends ViewModel {
             return;
         }
 
+        mGitHubService.getGistStarById(mGistId).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.code() == 404) {
+                    mIsGistStarred.postValue(false);
+                    return;
+                } else if (response.code() == 204) {
+                    mIsGistStarred.postValue(false);
+                    return;
+                }
+                showError(NetworkUtil.onGitHubResponseError(response));
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
+        });
 
     }
 
@@ -232,6 +251,21 @@ public class GistViewModel extends ViewModel {
             return;
         }
 
+        mGitHubService.starGistById(mGistId).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.code() == 204) {
+                    mIsGistStarred.postValue(true);
+                    return;
+                }
+                showError(NetworkUtil.onGitHubResponseError(response));
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
+        });
 
     }
 
@@ -246,6 +280,21 @@ public class GistViewModel extends ViewModel {
             return;
         }
 
+        mGitHubService.unstarGistById(mGistId).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.code() == 204) {
+                    mIsGistStarred.postValue(false);
+                    return;
+                }
+                showError(NetworkUtil.onGitHubResponseError(response));
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
+        });
 
     }
 
@@ -330,6 +379,32 @@ public class GistViewModel extends ViewModel {
             return;
         }
 
+        GistComment newGistComment = new GistComment();
+        newGistComment.setBody(comment);
+
+        mGitHubService.createCommentOnGist(mGistId, newGistComment).enqueue(new Callback<GistComment>() {
+            @Override
+            public void onResponse(Call<GistComment> call, Response<GistComment> response) {
+                if (!response.isSuccessful()) {
+                    showError(NetworkUtil.onGitHubResponseError(response));
+                    return;
+                }
+
+                List<GistComment> currentList = mComments.getValue();
+                if (currentList == null) {
+                    currentList = new ArrayList<>();
+                }
+                List<GistComment> comments = new ArrayList<>(currentList);
+                currentList.add(0, response.body());
+                mComments.postValue(comments);
+
+            }
+
+            @Override
+            public void onFailure(Call<GistComment> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
+        });
 
 
     }

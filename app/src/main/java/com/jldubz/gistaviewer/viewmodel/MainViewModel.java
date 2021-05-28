@@ -2,6 +2,8 @@ package com.jldubz.gistaviewer.viewmodel;
 
 import android.view.View;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.jldubz.gistaviewer.model.Constants;
 import com.jldubz.gistaviewer.model.NetworkUtil;
 import com.jldubz.gistaviewer.model.data.BasicAuthInterceptor;
@@ -11,7 +13,10 @@ import com.jldubz.gistaviewer.model.GitHubUser;
 
 import java.util.ArrayList;
 import android.util.Base64;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -90,8 +95,10 @@ public class MainViewModel extends ViewModel {
      */
     private void initAnonService() {
 
+        Gson gson = new GsonBuilder().setDateFormat("YYYY-MM-DD'T'HH:MM:SSZ").create();
+
         Retrofit retrofit = new Retrofit.Builder().baseUrl(Constants.URL_GITHUB)
-                .addConverterFactory(GsonConverterFactory.create()).build();
+                .addConverterFactory(GsonConverterFactory.create(gson)).build();
         mGitHubService = retrofit.create(IGitHubService.class);
     }
 
@@ -218,7 +225,11 @@ public class MainViewModel extends ViewModel {
      */
     public void discoverMoreGists() {
 
-        mGitHubService.getPublicGists(mGistPagesLoaded + 1).enqueue(new Callback<List<Gist>>() {
+        Map<String, Object> queryMap = new HashMap<>();
+        queryMap.put("page", mGistPagesLoaded + 1);
+        queryMap.put("per_page", 15);
+
+        mGitHubService.getPublicGists(queryMap).enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {

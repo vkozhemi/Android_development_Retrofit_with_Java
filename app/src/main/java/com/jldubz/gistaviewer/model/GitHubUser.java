@@ -1,7 +1,12 @@
 package com.jldubz.gistaviewer.model;
 
+import androidx.annotation.Keep;
+
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Date;
 
+@Keep
 public class GitHubUser {
 
     /*
@@ -37,7 +42,8 @@ public class GitHubUser {
     private int public_gists;
     private int followers;
     private int following;
-    private Date created_at;
+    @SerializedName("created_at")
+    private Date createdAt;
     private Date updated_at;
     private int private_gists;
 
@@ -137,12 +143,12 @@ public class GitHubUser {
         this.following = following;
     }
 
-    public Date getCreated_at() {
-        return created_at;
+    public Date getCreatedAt() {
+        return createdAt;
     }
 
-    public void setCreated_at(Date created_at) {
-        this.created_at = created_at;
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Date getUpdated_at() {
